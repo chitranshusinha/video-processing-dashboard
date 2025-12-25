@@ -10,7 +10,7 @@ import {
   ResponsiveContainer
 } from "recharts";
 
-const socket = io("http://localhost:5000");
+const socket = io("https://video-processing-dashboard.onrender.com");
 
 export default function App() {
   const [file, setFile] = useState(null);
@@ -32,7 +32,7 @@ export default function App() {
     if (!file) return alert("Select a video first");
     const form = new FormData();
     form.append("video", file);
-    const res = await axios.post("http://localhost:5000/upload", form);
+    const res = await axios.post("https://video-processing-dashboard.onrender.com/upload", form);
     setVideos((prev) => [...prev, res.data]);
     setFile(null);
   };
@@ -275,7 +275,7 @@ export default function App() {
                 {v.status === "safe" && (
                   <video width="100%" controls style={{ borderRadius: 8 }}>
                     <source
-                      src={`http://localhost:5000/stream/${v.file}`}
+                      src={`https://video-processing-dashboard.onrender.com/stream/${v.file}`}
                       type="video/mp4"
                     />
                   </video>
