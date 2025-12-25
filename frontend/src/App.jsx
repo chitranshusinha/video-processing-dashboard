@@ -10,14 +10,17 @@ import {
   ResponsiveContainer
 } from "recharts";
 
-const socket = io("https://video-processing-dashboard.onrender.com");
+/* 🔴 USE YOUR DEPLOYED BACKEND URL */
+const BACKEND_URL = "https://video-processing-dashboard.onrender.com";
+const socket = io(BACKEND_URL);
 
 export default function App() {
   const [file, setFile] = useState(null);
   const [videos, setVideos] = useState([]);
-  const [role, setRole] = useState("admin");
+  const [role, setRole] = useState("admin"); // admin | editor | viewer
   const [dark, setDark] = useState(false);
 
+  /* SOCKET LISTENER */
   useEffect(() => {
     socket.on("progress", (video) => {
       setVideos((prev) =>
@@ -28,15 +31,19 @@ export default function App() {
     return () => socket.off("progress");
   }, []);
 
+  /* UPLOAD (ADMIN + EDITOR) */
   const upload = async () => {
     if (!file) return alert("Select a video first");
+
     const form = new FormData();
     form.append("video", file);
-    const res = await axios.post("https://video-processing-dashboard.onrender.com/upload", form);
+
+    const res = await axios.post(`${BACKEND_URL}/upload`, form);
     setVideos((prev) => [...prev, res.data]);
     setFile(null);
   };
 
+  /* THEME */
   const theme = {
     bg: dark ? "#0b1220" : "#f4f6fb",
     panel: dark ? "#020617" : "#ffffff",
@@ -74,7 +81,7 @@ export default function App() {
       >
         <h2>🎥 Video App</h2>
 
-        {["Dashboard", "Uploads", "Analytics", "Settings"].map((item) => (
+        {["Dashboard", "Videos", "Analytics", "Settings"].map((item) => (
           <button
             key={item}
             style={{
@@ -111,7 +118,7 @@ export default function App() {
           <h2>Video Processing Dashboard</h2>
 
           <div style={{ display: "flex", gap: 12 }}>
-            {/* ROLE TOGGLE */}
+            {/* ROLE SWITCH */}
             <div
               style={{
                 display: "flex",
@@ -120,7 +127,7 @@ export default function App() {
                 borderRadius: 999
               }}
             >
-              {["admin", "viewer"].map((r) => (
+              {["admin", "editor", "viewer"].map((r) => (
                 <button
                   key={r}
                   onClick={() => setRole(r)}
@@ -133,7 +140,7 @@ export default function App() {
                     color: role === r ? "#fff" : theme.muted
                   }}
                 >
-                  {r}
+                  {r.toUpperCase()}
                 </button>
               ))}
             </div>
@@ -157,8 +164,8 @@ export default function App() {
         {/* CONTENT */}
         <main style={{ padding: 24, overflowY: "auto" }}>
           
-          {/* UPLOAD SECTION */}
-          {role === "admin" && (
+          {/* UPLOAD — ADMIN + EDITOR */}
+          {(role === "admin" || role === "editor") && (
             <div
               style={{
                 background: theme.panel,
@@ -192,12 +199,12 @@ export default function App() {
               </button>
 
               <span style={{ color: theme.muted }}>
-                MP4 only • Real-time processing
+                Role: {role.toUpperCase()}
               </span>
             </div>
           )}
 
-          {/* ✅ ANALYTICS — CORRECT PLACE */}
+          {/* ANALYTICS */}
           <h3 style={{ marginBottom: 12 }}>Analytics</h3>
 
           <div
@@ -245,14 +252,8 @@ export default function App() {
                   boxShadow: "0 10px 30px rgba(0,0,0,0.25)"
                 }}
               >
-                <p>
-                  <b>Status:</b>{" "}
-                  <span style={{ color: v.status === "safe" ? "green" : "orange" }}>
-                    {v.status}
-                  </span>
-                </p>
-
-                <p>Progress: {v.progress}%</p>
+                <p><b>Status:</b> {v.status}</p>
+                <p><b>Progress:</b> {v.progress}%</p>
 
                 <div
                   style={{
@@ -272,13 +273,32 @@ export default function App() {
                   />
                 </div>
 
+                {/* VIEW — ALL ROLES */}
                 {v.status === "safe" && (
                   <video width="100%" controls style={{ borderRadius: 8 }}>
                     <source
-                      src={`https://video-processing-dashboard.onrender.com/stream/${v.file}`}
+                      src={`${BACKEND_URL}/stream/${v.file}`}
                       type="video/mp4"
                     />
                   </video>
+                )}
+
+                {/* MANAGE — ADMIN + EDITOR */}
+                {(role === "admin" || role === "editor") && (
+                  <button
+                    style={{
+                      marginTop: 10,
+                      padding: "6px 12px",
+                      borderRadius: 6,
+                      border: "none",
+                      background: "#ef4444",
+                      color: "#fff",
+                      cursor: "pointer"
+                    }}
+                    onClick={() => alert("Manage video action")}
+                  >
+                    Manage Video
+                  </button>
                 )}
               </div>
             ))}
